@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 set -e ; # Have script exit in the event of a failed command.
 
 # connectToMinio
@@ -17,7 +17,7 @@ connectToMinio() {
   STATUS=$? ;
   until [ $STATUS = 0 ]
   do
-    ATTEMPTS=`expr $ATTEMPTS + 1` ;
+    ATTEMPTS=$(( ATTEMPTS + 1)) ;
     echo \"Failed attempts: $ATTEMPTS\" ;
     if [ $ATTEMPTS -gt $LIMIT ]; then
       exit 1 ;
@@ -59,9 +59,9 @@ createBucket() {
   fi
 
   # Create the bucket if it does not exist
-  if ! checkBucketExists $BUCKET ; then
-    echo "Creating bucket '$BUCKET'"
-    /usr/bin/mc mb myminio/$BUCKET
+  if ! checkBucketExists "$BUCKET" ; then
+    echo "Creating bucket '$BUCKE'"
+    /usr/bin/mc mb myminio/"$BUCKET"
   else
     echo "Bucket '$BUCKET' already exists."
   fi
@@ -69,12 +69,12 @@ createBucket() {
   # At this point, the bucket should exist, skip checking for existence
   # Set policy on the bucket
   echo "Setting policy of bucket '$BUCKET' to '$POLICY'."
-  /usr/bin/mc policy set $POLICY myminio/$BUCKET
+  /usr/bin/mc policy set "$POLICY" myminio/"$BUCKET"
 }
 
 
 # Try connecting to Minio instance
-scheme=http
-connectToMinio $scheme
+scheme="${MINIO_PROTOCOL}"
+connectToMinio "${scheme}"
 # Create the bucket
-createBucket $INIT_BUCKET_NAME none false
+createBucket "${INIT_BUCKET_NAME}" none false

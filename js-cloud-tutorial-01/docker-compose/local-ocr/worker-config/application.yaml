@@ -3,9 +3,10 @@ stage: dev
 publisher:
   s3:
     bucket: jadice-server-ocr-bucket
-    endpoint: "http://${MINIO_ENDPOINT}:${MINIO_PORT}"
+    endpoint: "${MINIO_PROTOCOL}://${MINIO_ENDPOINT}:${MINIO_PORT}"
     access-key: "${MINIO_ACCESS_KEY}"
     secret-key: "${MINIO_SECRET_KEY}"
+    protocol: "${MINIO_PROTOCOL}"
 
 jadice:
   input:

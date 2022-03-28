@@ -3,7 +3,7 @@ server:
   port: 8080
 jss:
   basic:
-    access-token: JADICE-SERVER-AUTH-TOKEN
+    access-token: ${JS_DIRECTOR_ACCESS_TOKEN}
   engine:
     paralleljobs:
       def: 4
@@ -12,7 +12,7 @@ jss:
       - type: "ocr"
         uri: "http://jadice-server-cloud-worker-tessocr:8080"
         displayName: "Tesseract OCR"
-        description: "This worker performs OCR analysis and can return text, PDF, and sth else."
+        description: "This worker performs OCR analysis and can return text, PDF, and hOCR."
   db-clean-job:
     # Run the job every weekday at 4:05 AM.
     cronSchedule: "0 5 4 * * MON-FRI"
