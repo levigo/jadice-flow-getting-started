@@ -21,13 +21,14 @@ import org.junit.Test;
 
 import com.jadice.server.cloud.client.DirectorClient;
 import com.jadice.server.cloud.client.DirectorClientBuilder;
-import com.jadice.server.cloud.client.api.director.domain.Job;
-import com.jadice.server.cloud.client.api.director.domain.Job.State;
+import com.jadice.server.cloud.client.S3ProxyClient;
+import com.jadice.server.cloud.client.S3ProxyClientBuilder;
 import com.jadice.server.cloud.client.api.director.domain.JobCreationResult;
 import com.jadice.server.cloud.client.api.director.domain.JobExecutionResult;
 import com.jadice.server.cloud.worker.StreamDescriptor;
 import com.jadice.server.cloud.worker.StreamReference;
 import com.jadice.server.cloud.worker.WorkerInvocation;
+import com.jadice.server.director.pe.Job.State;
 
 /**
  * A simple OCR test which performs the following actions:
@@ -43,14 +44,22 @@ public class OCRTest {
   private static String s3ProxyURL = "http://localhost:7082";
   private static String authToken = "THE-JADICE-SERVER-ACCESS-TOKEN";
 
-  // Create a single director client to use in tests
+  // Create one director client and one s3-proxy client
   private static DirectorClient directorClient = createDirectorClient();
+  private static S3ProxyClient s3ProxyClient = createS3ProxyClient();
 
   private static DirectorClient createDirectorClient() {
-    DirectorClient directorClient = new DirectorClientBuilder().setDirectorUri(URI.create(directorURL)).setS3ProxyUri(
-        URI.create(s3ProxyURL)).createDirectorClient();
-    directorClient.addHeader("Authorization", "Bearer " + authToken);
-    return directorClient;
+    return new DirectorClientBuilder()
+        .setDirectorUri(URI.create(directorURL))
+        .setAccessToken(authToken)
+        .createDirectorClient();
+  }
+
+  private static S3ProxyClient createS3ProxyClient() {
+    return new S3ProxyClientBuilder()
+        .setS3ProxyUri(URI.create(s3ProxyURL))
+        .setAccessToken(authToken)
+        .createS3ProxyClient();
   }
 
   /**
@@ -61,7 +70,7 @@ public class OCRTest {
    * <li>Compare the result with the expected text</li>
    * </ul>
    * 
-   * @throws Exception
+   * @throws Exception if something goes wrong
    */
   @Test
   public void test_correctOCRResult() throws Exception {
@@ -79,10 +88,11 @@ public class OCRTest {
     // Upload the image to S3
     String fileName = "temp_ocr.png";
     String mimeType = "image/png";
-    URI uploadFile = directorClient.uploadFile(imgData, mimeType, fileName);
+    URI uploadFile = s3ProxyClient.uploadFile(imgData, mimeType, fileName);
 
     // Call the Jadice Server
     String ocrResultPlainText = invokeJadiceServerOCRWorker(uploadFile, mimeType, fileName);
+    System.out.println("OCR result text: " + ocrResultPlainText);
 
     // Assert the result
     assertEquals(text, ocrResultPlainText);
@@ -98,7 +108,7 @@ public class OCRTest {
    * @param contentType mime type of image
    * @param filename the file name
    * @return the plain text OCR result
-   * @throws Exception
+   * @throws Exception if something goes wrong
    */
   private String invokeJadiceServerOCRWorker(URI uploadFile, String contentType, String filename) throws Exception {
     // 1) Create the configuration for the OCR invocation
@@ -124,10 +134,10 @@ public class OCRTest {
     long jobId = creationResult.getJobId();
     State jobState = directorClient.waitTillJobIsStarted(jobId, 10000);
 
-    if (!directorClient.isFinalState(jobState)) {
+    if (directorClient.isNotFinalState(jobState)) {
       jobState = directorClient.waitForFinalState(jobId, 60000); // 1min timout for demo
     }
-    if (Job.State.FINISHED.equals(jobState)) {
+    if (State.FINISHED.equals(jobState)) {
       JobExecutionResult jobResult = directorClient.retrieveJobResult(jobId);
       if (jobResult.isProcessingSuccess()) {
         // 3) Return the text result (first element of "output-formats" was text so this is the
@@ -150,12 +160,12 @@ public class OCRTest {
    * @param jobResult the job result
    * @param outputIndex the index
    * @return the result as string
-   * @throws IOException
+   * @throws IOException if something goes wrong
    */
   private String getResultText(JobExecutionResult jobResult, int outputIndex) throws IOException {
     final StreamReference streamReference = jobResult.getWorkerResult().getOutput().get(outputIndex);
 
-    InputStream resultStream = directorClient.downloadFile(streamReference.getUri());
+    InputStream resultStream = s3ProxyClient.downloadFile(streamReference.getUri());
     StringBuilder sb = new StringBuilder();
     try (BufferedReader br = new BufferedReader(new InputStreamReader(resultStream))) {
       String line;
