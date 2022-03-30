@@ -3,14 +3,14 @@ server:
   port: 8080
 jss:
   basic:
-    access-token: ${JS_DIRECTOR_ACCESS_TOKEN}
+    access-token: ${JF_DIRECTOR_ACCESS_TOKEN}
   engine:
     paralleljobs:
       def: 4
   register:
     jobtypes:
       - type: "ocr"
-        uri: "http://jadice-server-cloud-worker-tessocr:8080"
+        uri: "http://jadice-flow-worker-tessocr:8080"
         displayName: "Tesseract OCR"
         description: "This worker performs OCR analysis and can return text, PDF, and hOCR."
   db-clean-job:
@@ -21,7 +21,7 @@ jss:
     #cronSchedule: "0 */1 * * * *"
 spring:
   datasource:
-    url: "jdbc:mariadb://mariadb-director/jadice_server_director"
+    url: "jdbc:mariadb://mariadb-director/jadice_flow_director"
     username: root
     password: letmebe
     driver-class-name: org.mariadb.jdbc.Driver

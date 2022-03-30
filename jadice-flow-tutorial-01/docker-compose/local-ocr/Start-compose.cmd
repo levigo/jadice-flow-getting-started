@@ -1,5 +1,5 @@
 @echo off
-echo Starting docker compose for jadice server with OCR
+echo Starting docker compose for jadice flow with OCR
 echo Login to levigo container registry
 docker login registry.jadice.com
 
