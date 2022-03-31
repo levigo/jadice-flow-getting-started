@@ -60,7 +60,7 @@ createBucket() {
 
   # Create the bucket if it does not exist
   if ! checkBucketExists "$BUCKET" ; then
-    echo "Creating bucket '$BUCKE'"
+    echo "Creating bucket '$BUCKET'"
     /usr/bin/mc mb myminio/"$BUCKET"
   else
     echo "Bucket '$BUCKET' already exists."
