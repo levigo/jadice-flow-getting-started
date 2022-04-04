@@ -3,12 +3,12 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.jadice</groupId>
-	<artifactId>js-cloud-getting-started</artifactId>
+	<artifactId>jadice-flow-getting-started</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
-	<description>Parent module for all JadiceServerCloud Tutorials</description>
+	<description>Parent module for all jadice flow tutorials</description>
 	<modules>
-		<module>js-cloud-tutorial-01</module>
-		<module>js-cloud-tutorial-02</module>
+		<module>jadice-flow-tutorial-01</module>
+		<module>jadice-flow-tutorial-02</module>
 	</modules>
 </project>

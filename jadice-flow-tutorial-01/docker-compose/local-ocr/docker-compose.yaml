@@ -2,7 +2,7 @@
 version: "2.4"
 
 networks:
-  jadice-server-network:
+  jadice-flow-network:
     driver: bridge
 
 services:
@@ -11,16 +11,18 @@ services:
   jadice-director:
     mem_limit: "4294967296"
     mem_reservation: 2147483648
-    image:  "${JS_DOCKER_REGISTRY_JADICE}js-director:2020.0-pre.0.4.1"
+    image:  "${JF_CONTAINER_REGISTRY_JADICE}js-director:2021.0-pre.0.23.1"
     user: '538446:538446'
     networks:
-      - jadice-server-network
+      - jadice-flow-network
     depends_on:
       mariadb-director:
         condition: service_healthy
     restart: always
+    environment:
+      JF_DIRECTOR_ACCESS_TOKEN: ${JF_DIRECTOR_ACCESS_TOKEN}
     volumes:
-      - ${JS_DC_PATH}/director-config:/config
+      - ./director-config:/app/config
     ports:
       - "8080:8080"
 
@@ -29,11 +31,11 @@ services:
   mariadb-director:
     mem_limit: "2147483648"
     mem_reservation: "1073741824"
-    image: "${JS_DOCKER_REGISTRY_PROXY}mariadb:10.3.24-focal"
+    image: "${JF_CONTAINER_REGISTRY_PROXY}mariadb:10.7.3-focal"
     #user: '999:999'
     restart: always
     networks:
-      - jadice-server-network
+      - jadice-flow-network
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
       interval: 10s
@@ -41,10 +43,10 @@ services:
       retries: 3
     environment:
       MYSQL_ROOT_PASSWORD: letmebe
-      MYSQL_DATABASE: jadice_server_director
+      MYSQL_DATABASE: jadice_flow_director
     volumes:
-      - ${JS_DC_PATH}/mariadb-config:/etc/mysql/conf.d
-      - ${JS_DC_PATH}/mariadb-data:/var/lib/mysql
+      - ./mariadb-config:/etc/mysql/conf.d
+      - ./mariadb-data:/var/lib/mysql
     ports:
       - "3306:3306"
 
@@ -53,30 +55,31 @@ services:
   minio:
     mem_limit: "4294967296"
     mem_reservation: "2147483648"
-    image: "${JS_DOCKER_REGISTRY_PROXY}minio/minio:RELEASE.2021-01-16T02-19-44Z"
+    image: "${JF_CONTAINER_REGISTRY_PROXY}minio/minio:RELEASE.2022-03-26T06-49-28Z"
     restart: always
     volumes:
-      - ${JS_DC_PATH}/minio-data:/data
+      - ./minio-data:/data
     ports:
       - "${MINIO_PORT}:${MINIO_PORT}"
+      - "${MINIO_CONSOLE_PORT}:${MINIO_CONSOLE_PORT}"
     networks:
-      - jadice-server-network
+      - jadice-flow-network
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
-      interval: 20s
+      interval: 30s
       timeout: 20s
       retries: 3
     environment:
-      MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY}"
-      MINIO_SECRET_KEY: "${MINIO_SECRET_KEY}"
+      MINIO_ROOT_USER: "${MINIO_ACCESS_KEY}"
+      MINIO_ROOT_PASSWORD: "${MINIO_SECRET_KEY}"
       MINIO_BROWSER: "on"
-    command: "server --address 0.0.0.0:${MINIO_PORT} /data"
+    command: "server --address 0.0.0.0:${MINIO_PORT} --console-address :${MINIO_CONSOLE_PORT} /data"
 
   minio-client:
-    image: "${JS_DOCKER_REGISTRY_PROXY}minio/mc:RELEASE.2021-01-16T02-45-34Z"
-    entrypoint: ["/bin/sh", "/config/initialize"]
+    image: "${JF_CONTAINER_REGISTRY_PROXY}minio/mc:RELEASE.2022-03-17T20-25-06Z"
+    entrypoint: ["/bin/bash", "/config/initialize"]
     networks:
-      - jadice-server-network
+      - jadice-flow-network
     depends_on:
       minio:
         condition: service_healthy
@@ -85,18 +88,19 @@ services:
       MINIO_PORT: "${MINIO_PORT}"
       MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY}"
       MINIO_SECRET_KEY: "${MINIO_SECRET_KEY}"
-      INIT_BUCKET_NAME: jadice-server-ocr-bucket
+      INIT_BUCKET_NAME: jadice-flow-ocr-bucket
+      MINIO_PROTOCOL: "${MINIO_PROTOCOL}"
     volumes:
-      - ${JS_DC_PATH}/minio-config:/config
+      - ./minio-config:/config
 
   ## WORKER ###
   # ==============================================
-  jadice-server-cloud-worker-tessocr:
+  jadice-flow-worker-tessocr:
     mem_limit: "8589934592"
     mem_reservation: "4294967296"
-    image: "${JS_DOCKER_REGISTRY_JADICE}js-worker-tessocr:2020.0-pre.0.2.0"
+    image: "${JF_CONTAINER_REGISTRY_JADICE}js-worker-tessocr:2021.0-pre.0.10.1"
     networks:
-      - jadice-server-network
+      - jadice-flow-network
     restart: always
     user: '538446:538446'
     environment:
@@ -104,18 +108,18 @@ services:
       MINIO_PORT: "${MINIO_PORT}"
       MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY}"
       MINIO_SECRET_KEY: "${MINIO_SECRET_KEY}"
-      TESSDATA_PREFIX: "/usr/share/tesseract-ocr/4.00/tessdata"
+      MINIO_PROTOCOL: "${MINIO_PROTOCOL}"
     volumes:
-      - ${JS_DC_PATH}/worker-config:/config
+      - ./worker-config:/app/config
     ports:
       - "7081:8080"
 
   # ### S3 Proxy ###
   # ==============================================
   s3-proxy:
-    image: "${JS_DOCKER_REGISTRY_JADICE}js-s3-upload-proxy:2020.0-pre.0.1.0"
+    image: "${JF_CONTAINER_REGISTRY_JADICE}js-s3-upload-proxy:2021.0-pre.0.6.1"
     networks:
-      - jadice-server-network
+      - jadice-flow-network
     restart: always
     user: '538446:538446'
     environment:
@@ -123,8 +127,9 @@ services:
       MINIO_PORT: "${MINIO_PORT}"
       MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY}"
       MINIO_SECRET_KEY: "${MINIO_SECRET_KEY}"
+      MINIO_PROTOCOL: "${MINIO_PROTOCOL}"
     volumes:
-      - ${JS_DC_PATH}/worker-config:/config
+      - ./worker-config:/config
     ports:
       - "7082:8080"
 ...
