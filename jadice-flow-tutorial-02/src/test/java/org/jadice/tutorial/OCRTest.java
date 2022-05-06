@@ -19,16 +19,16 @@ import javax.imageio.ImageIO;
 
 import org.junit.Test;
 
-import com.jadice.server.cloud.client.DirectorClient;
-import com.jadice.server.cloud.client.DirectorClientBuilder;
-import com.jadice.server.cloud.client.S3ProxyClient;
-import com.jadice.server.cloud.client.S3ProxyClientBuilder;
-import com.jadice.server.cloud.client.api.director.domain.JobCreationResult;
-import com.jadice.server.cloud.client.api.director.domain.JobExecutionResult;
+import com.jadice.flow.client.DirectorClient;
+import com.jadice.flow.client.DirectorClientBuilder;
+import com.jadice.flow.client.S3ProxyClient;
+import com.jadice.flow.client.S3ProxyClientBuilder;
+import com.jadice.flow.client.api.director.domain.JobCreationResult;
+import com.jadice.flow.client.api.director.domain.JobExecutionResult;
 import com.jadice.server.cloud.worker.StreamDescriptor;
 import com.jadice.server.cloud.worker.StreamReference;
 import com.jadice.server.cloud.worker.WorkerInvocation;
-import com.jadice.server.director.pe.Job.State;
+import com.jadice.flow.director.pe.Job.State;
 
 /**
  * A simple OCR test which performs the following actions:

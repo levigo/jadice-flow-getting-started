@@ -17,9 +17,9 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>org.jadice.server.cloud.client</groupId>
+			<groupId>com.jadice.flow.client</groupId>
 			<artifactId>client</artifactId>
-			<version>2021.0-pre.1.2.1</version>
+			<version>1.2.2</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
