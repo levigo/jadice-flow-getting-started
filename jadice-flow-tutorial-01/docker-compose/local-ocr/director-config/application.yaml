@@ -1,7 +1,7 @@
 ---
 server:
   port: 8080
-jss:
+jfd:
   basic:
     access-token: ${JF_DIRECTOR_ACCESS_TOKEN}
   engine:

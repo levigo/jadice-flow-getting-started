@@ -11,7 +11,7 @@ services:
   jadice-director:
     mem_limit: "4294967296"
     mem_reservation: 2147483648
-    image:  "${JF_CONTAINER_REGISTRY_JADICE}js-director:2021.0-pre.0.23.2"
+    image:  "${JF_CONTAINER_REGISTRY_JADICE}jf-director:0.24.1"
     user: '538446:538446'
     networks:
       - jadice-flow-network
@@ -55,7 +55,7 @@ services:
   minio:
     mem_limit: "4294967296"
     mem_reservation: "2147483648"
-    image: "${JF_CONTAINER_REGISTRY_PROXY}minio/minio:RELEASE.2022-04-12T06-55-35Z"
+    image: "${JF_CONTAINER_REGISTRY_PROXY}minio/minio:RELEASE.2022-05-04T07-45-27Z"
     restart: always
     volumes:
       - ./minio-data:/data
@@ -76,7 +76,7 @@ services:
     command: "server --address 0.0.0.0:${MINIO_PORT} --console-address :${MINIO_CONSOLE_PORT} /data"
 
   minio-client:
-    image: "${JF_CONTAINER_REGISTRY_PROXY}minio/mc:RELEASE.2022-04-07T21-43-27Z"
+    image: "${JF_CONTAINER_REGISTRY_PROXY}minio/mc:RELEASE.2022-05-04T06-07-55Z"
     entrypoint: ["/bin/bash", "/config/initialize"]
     networks:
       - jadice-flow-network
@@ -98,7 +98,7 @@ services:
   jadice-flow-worker-tessocr:
     mem_limit: "8589934592"
     mem_reservation: "4294967296"
-    image: "${JF_CONTAINER_REGISTRY_JADICE}js-worker-tessocr:2021.0-pre.0.11.0"
+    image: "${JF_CONTAINER_REGISTRY_JADICE}jf-worker-tessocr:0.12.0"
     networks:
       - jadice-flow-network
     restart: always
@@ -117,7 +117,7 @@ services:
   # ### S3 Proxy ###
   # ==============================================
   s3-proxy:
-    image: "${JF_CONTAINER_REGISTRY_JADICE}js-s3-upload-proxy:2021.0-pre.0.6.2"
+    image: "${JF_CONTAINER_REGISTRY_JADICE}jf-s3-proxy:0.7.0"
     networks:
       - jadice-flow-network
     restart: always

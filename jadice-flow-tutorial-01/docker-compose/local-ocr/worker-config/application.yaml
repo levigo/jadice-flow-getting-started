@@ -10,7 +10,7 @@ publisher:
 
 spring:
   application:
-    name: jadice-flow-worker-tessocr
+    name: jadice-flow-worker-ocr
 
 opentracing:
   jaeger:
