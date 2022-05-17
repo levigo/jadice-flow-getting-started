@@ -91,7 +91,7 @@ public class OCRTest {
     URI uploadFile = s3ProxyClient.uploadFile(imgData, mimeType, fileName);
 
     // Call jadice flow
-    String ocrResultPlainText = invokeJadiceServerOCRWorker(uploadFile, mimeType, fileName);
+    String ocrResultPlainText = invokeJadiceFlowOCRWorker(uploadFile, mimeType, fileName);
     System.out.println("OCR result text: " + ocrResultPlainText);
 
     // Assert the result
@@ -110,7 +110,7 @@ public class OCRTest {
    * @return the plain text OCR result
    * @throws Exception if something goes wrong
    */
-  private String invokeJadiceServerOCRWorker(URI uploadFile, String contentType, String filename) throws Exception {
+  private String invokeJadiceFlowOCRWorker(URI uploadFile, String contentType, String filename) throws Exception {
     // 1) Create the configuration for the OCR invocation
     String workerName = "ocr";
     WorkerInvocation workerInvocation = new WorkerInvocation();
