@@ -1,6 +1,7 @@
 package org.jadice.tutorial;
 
-import static org.junit.Assert.assertEquals;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -17,7 +18,7 @@ import java.util.Map;
 
 import javax.imageio.ImageIO;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.jadice.flow.client.DirectorClient;
 import com.jadice.flow.client.DirectorClientBuilder;
@@ -42,7 +43,7 @@ public class OCRTest {
   // Parameters to access this jadice flow bundle
   private static final String directorURL = "http://localhost:8080";
   private static final String s3ProxyURL = "http://localhost:7082";
-  private static final String authToken = "THE-JADICE-FLOW-ACCESS-TOKEN";
+  private static final String authToken = "***REMOVED***";
 
   // Create one director client and one s3-proxy client
   private static final DirectorClient directorClient = createDirectorClient();
