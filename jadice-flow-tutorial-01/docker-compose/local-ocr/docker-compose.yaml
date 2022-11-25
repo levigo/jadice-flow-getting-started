@@ -31,7 +31,7 @@ services:
   mariadb-director:
     mem_limit: "2147483648"
     mem_reservation: "1073741824"
-    image: "${JF_CONTAINER_REGISTRY_PROXY}mariadb:10.7.3-focal"
+    image: "${JF_CONTAINER_REGISTRY_PROXY}mariadb:11.4.0-focal"
     #user: '999:999'
     restart: always
     networks:
