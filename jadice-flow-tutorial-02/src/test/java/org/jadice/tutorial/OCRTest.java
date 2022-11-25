@@ -43,7 +43,7 @@ public class OCRTest {
   // Parameters to access this jadice flow bundle
   private static final String directorURL = "http://localhost:8080";
   private static final String s3ProxyURL = "http://localhost:7082";
-  private static final String authToken = "***REMOVED***";
+  private static final String authToken = "THE-JADICE-FLOW-ACCESS-TOKEN";
 
   // Create one director client and one s3-proxy client
   private static final DirectorClient directorClient = createDirectorClient();
