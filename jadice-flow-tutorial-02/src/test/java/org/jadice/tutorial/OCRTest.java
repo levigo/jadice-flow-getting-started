@@ -1,6 +1,7 @@
 package org.jadice.tutorial;
 
-import static org.junit.Assert.assertEquals;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -17,7 +18,7 @@ import java.util.Map;
 
 import javax.imageio.ImageIO;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.jadice.flow.client.DirectorClient;
 import com.jadice.flow.client.DirectorClientBuilder;

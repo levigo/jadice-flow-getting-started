@@ -4,3 +4,4 @@
 **/minio-data
 **/mariadb-data
 *.iml
+.vscode

@@ -16,8 +16,8 @@ services:
     networks:
       - jadice-flow-network
     depends_on:
-      mariadb-director:
-        condition: service_healthy
+      - mariadb-director
+        # condition: service_healthy
     restart: always
     environment:
       JF_DIRECTOR_ACCESS_TOKEN: ${JF_DIRECTOR_ACCESS_TOKEN}
@@ -31,21 +31,21 @@ services:
   mariadb-director:
     mem_limit: "2147483648"
     mem_reservation: "1073741824"
-    image: "${JF_CONTAINER_REGISTRY_PROXY}mariadb:10.7.3-focal"
+    image: "${JF_CONTAINER_REGISTRY_PROXY}mariadb:10.10.2-jammy"
     #user: '999:999'
     restart: always
     networks:
       - jadice-flow-network
-    healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 1s
-      retries: 3
+    # healthcheck:
+      # test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      # interval: 10s
+      # timeout: 1s
+      # retries: 3
     environment:
       MYSQL_ROOT_PASSWORD: letmebe
       MYSQL_DATABASE: jadice_flow_director
     volumes:
-      - ./mariadb-config:/etc/mysql/conf.d
+      - ./mariadb-config:/etc/mysql/conf.d:ro
       - ./mariadb-data:/var/lib/mysql
     ports:
       - "3306:3306"
@@ -91,14 +91,14 @@ services:
       INIT_BUCKET_NAME: jadice-flow-ocr-bucket
       MINIO_PROTOCOL: "${MINIO_PROTOCOL}"
     volumes:
-      - ./minio-config:/config
+       - ./minio-config:/config
 
   ## WORKER ###
   # ==============================================
   jadice-flow-worker-tessocr:
     mem_limit: "8589934592"
     mem_reservation: "4294967296"
-    image: "${JF_CONTAINER_REGISTRY_JADICE}jf-worker-tessocr:0.12.0"
+    image: "${JF_CONTAINER_REGISTRY_JADICE}jf-worker-tessocr:1.1.0"
     networks:
       - jadice-flow-network
     restart: always
@@ -117,7 +117,7 @@ services:
   # ### S3 Proxy ###
   # ==============================================
   s3-proxy:
-    image: "${JF_CONTAINER_REGISTRY_JADICE}jf-s3-proxy:0.7.0"
+    image: "${JF_CONTAINER_REGISTRY_JADICE}jf-s3-proxy:0.9.1"
     networks:
       - jadice-flow-network
     restart: always
