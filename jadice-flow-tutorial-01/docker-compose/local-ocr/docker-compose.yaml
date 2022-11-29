@@ -31,7 +31,7 @@ services:
   mariadb-director:
     mem_limit: "2147483648"
     mem_reservation: "1073741824"
-    image: "${JF_CONTAINER_REGISTRY_PROXY}mariadb:11.4.0-focal"
+    image: "${JF_CONTAINER_REGISTRY_PROXY}mariadb:10.10.2-jammy"
     #user: '999:999'
     restart: always
     networks:
@@ -91,7 +91,7 @@ services:
       INIT_BUCKET_NAME: jadice-flow-ocr-bucket
       MINIO_PROTOCOL: "${MINIO_PROTOCOL}"
     volumes:
-      - C:\Users\wirlls\jadice-flow-getting-started\jadice-flow-tutorial-01\docker-compose\local-ocr\minio-config:/config
+       - ./minio-config:/config
 
   ## WORKER ###
   # ==============================================
