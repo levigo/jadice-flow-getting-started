@@ -8,28 +8,28 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import javax.imageio.ImageIO;
 
 import org.junit.jupiter.api.Test;
 
-import com.jadice.flow.client.DirectorClient;
-import com.jadice.flow.client.DirectorClientBuilder;
-import com.jadice.flow.client.S3ProxyClient;
-import com.jadice.flow.client.S3ProxyClientBuilder;
-import com.jadice.flow.client.api.director.domain.JobCreationResult;
-import com.jadice.flow.client.api.director.domain.JobExecutionResult;
-import com.jadice.server.cloud.worker.StreamDescriptor;
-import com.jadice.server.cloud.worker.StreamReference;
-import com.jadice.server.cloud.worker.WorkerInvocation;
-import com.jadice.flow.director.pe.Job.State;
+import com.jadice.flow.controller.client.connector.FlowJobClient;
+import com.jadice.flow.controller.client.connector.TokenProvider;
+import com.jadice.flow.controller.client.impl.EurekaStorageService;
+import com.jadice.flow.controller.model.Item;
+import com.jadice.flow.controller.model.Part;
+import com.jadice.flow.controller.rest.JobInformation;
+import com.jadice.flow.controller.rest.JobRequest;
 
 /**
  * A simple OCR test which performs the following actions:
@@ -39,29 +39,18 @@ import com.jadice.flow.director.pe.Job.State;
  * <li>Compare the result with the expected text</li>
  * </ul>
  */
-public class OCRTest {
+class OCRTest {
   // Parameters to access this jadice flow bundle
-  private static final String directorURL = "http://localhost:8080";
-  private static final String s3ProxyURL = "http://localhost:7082";
-  private static final String authToken = "THE-JADICE-FLOW-ACCESS-TOKEN";
+  private static final String JF_CONTROLLER_URL = "http://localhost:8080";
+  private static final String EUREKA_USERNAME = "user";
+  private static final String EUREKA_PASSWORD = "password";
+  private static final String EUREKA_ENDPOINT = "http://localhost:8085";
+  private static final String JOB_TEMPLATE_NAME = "ocr";
 
-  // Create one director client and one s3-proxy client
-  private static final DirectorClient directorClient = createDirectorClient();
-  private static final S3ProxyClient s3ProxyClient = createS3ProxyClient();
-
-  private static DirectorClient createDirectorClient() {
-    return new DirectorClientBuilder()
-        .setDirectorUri(URI.create(directorURL))
-        .setAccessToken(authToken)
-        .createDirectorClient();
-  }
-
-  private static S3ProxyClient createS3ProxyClient() {
-    return new S3ProxyClientBuilder()
-        .setS3ProxyUri(URI.create(s3ProxyURL))
-        .setAccessToken(authToken)
-        .createS3ProxyClient();
-  }
+  // create one client for the storage and one for the controller
+  private static final EurekaStorageService storageService = new EurekaStorageService(EUREKA_ENDPOINT, EUREKA_USERNAME, EUREKA_PASSWORD);
+  private static final FlowJobClient flowJobClient = new FlowJobClient(JF_CONTROLLER_URL,
+      Duration.ofSeconds(60), TokenProvider.NOOP_PROVIDER);
 
   /**
    * A simple OCR test which performs the following actions:
@@ -74,7 +63,7 @@ public class OCRTest {
    * @throws Exception if something goes wrong
    */
   @Test
-  public void test_correctOCRResult() throws Exception {
+  void test_correctOCRResult() throws Exception {
     // The text to recognize
     String text = "OCR test";
 
@@ -86,13 +75,14 @@ public class OCRTest {
     ImageIO.write(image, "png", baos);
     byte[] imgData = baos.toByteArray();
 
-    // Upload the image to S3
+    // Upload file with StorageService
     String fileName = "temp_ocr.png";
     String mimeType = "image/png";
-    URI uploadFile = s3ProxyClient.uploadFile(imgData, mimeType, fileName);
+    String uploadFile = storageService.upload(fileName, mimeType, new ByteArrayInputStream(imgData));
+    System.out.println("uploaded file to " + uploadFile);
 
     // Call jadice flow
-    String ocrResultPlainText = invokeJadiceFlowOCRWorker(uploadFile, mimeType, fileName);
+    String ocrResultPlainText = invokeJadiceFlowOCRWorker(uploadFile, mimeType);
     System.out.println("OCR result text: " + ocrResultPlainText);
 
     // Assert the result
@@ -100,75 +90,63 @@ public class OCRTest {
   }
 
   /**
-   * Creates the configuration parameters and send the OCR request to the jadice flow director.
+   * Creates the configuration parameters and send the OCR request to the jadice flow controller.
    * <p>
    * 
    * The timeouts in this Demo implementation are hard coded to 60sec.
    * 
    * @param uploadFile the URI for the uploaded image data
    * @param contentType mime type of image
-   * @param filename the file name
    * @return the plain text OCR result
    * @throws Exception if something goes wrong
    */
-  private String invokeJadiceFlowOCRWorker(URI uploadFile, String contentType, String filename) throws Exception {
-    // 1) Create the configuration for the OCR invocation
-    String workerName = "ocr";
-    WorkerInvocation workerInvocation = new WorkerInvocation();
-    StreamReference sourceItem = new StreamReference();
-    StreamDescriptor descriptor = new StreamDescriptor();
-    descriptor.setMimeType(contentType);
-    descriptor.setFileName(filename);
-    sourceItem.setDescriptor(descriptor);
-    sourceItem.setUri(uploadFile);
-    workerInvocation.addSourceItem(sourceItem);
+  private String invokeJadiceFlowOCRWorker(String uploadFile, String contentType) throws Exception {
+    // Invoke Job with FlowJobClient
+    JobRequest jobRequest = prepareJobRequest(uploadFile, contentType);
+    JobInformation job = flowJobClient.createJob(jobRequest);
+    long jobExecutionID = job.getJobExecutionID();
 
-    final Map<String, String> ocrWorkerConfiguration = new HashMap<>();
-    // See documentation for possible output formats. Most common formats are: text,hocr
-    // Multiple outputs can be requested at once (comma separated). In this demo we only fetch
-    // plain text.
-    ocrWorkerConfiguration.put("output-formats", "text");
-    workerInvocation.setConfiguration(ocrWorkerConfiguration);
+    // Wait for completion
+    JobInformation jobInformation = flowJobClient.awaitFinalJobState(jobExecutionID, 60000, TimeUnit.MILLISECONDS);
+    String status = jobInformation.getStatus();
 
-    // 2) Invoke job execution and wait for results
-    JobCreationResult creationResult = directorClient.createJob(workerName, workerInvocation);
-    long jobId = creationResult.getJobId();
-    State jobState = directorClient.waitTillJobIsStarted(jobId, 10000);
+    Part[] resultParts = flowJobClient.getResultParts(jobExecutionID);
+    Part resultPart = resultParts[0];
+    if (resultPart != null) {
+      String resultUri = resultPart.getUrl();
 
-    if (directorClient.isNotFinalState(jobState)) {
-      jobState = directorClient.waitForFinalState(jobId, 60000); // 1min timout for demo
-    }
-    if (State.FINISHED.equals(jobState)) {
-      JobExecutionResult jobResult = directorClient.retrieveJobResult(jobId);
-      if (jobResult.isProcessingSuccess()) {
-        // 3) Return the text result (first element of "output-formats" was text so this is the
-        // plain text result)
-        String ocrPlain = getResultText(jobResult, 0);
-        return ocrPlain;
-      } else {
-        throw new Exception(
-            "OCR Job did not complete successfully: " + jobResult.getWorkerProcessingFailed().getReason());
-      }
+      // download result with StorageService
+      System.out.println("downloading file from " + resultUri + " ...");
+      InputStream inputStream = storageService.download(resultUri);
+
+      return getResultText(inputStream);
     } else {
       throw new Exception(
-          String.format("Final Job state of job %s is not FINISHED, but %s after timeout", jobId, jobState));
+          String.format("No result for job with id=%d - finished with status %s", job.getJobExecutionID(), status));
     }
   }
 
+  private static JobRequest prepareJobRequest(String uploadUrl, String mimeType) {
+    Item item = new Item();
+    Part p = new Part();
+    p.setMimeType(mimeType);
+    p.setUrl(uploadUrl);
+    item.addParts(Collections.singletonList(p));
+    JobRequest request = new JobRequest();
+    request.setJobTemplateName(JOB_TEMPLATE_NAME);
+    request.getItems().add(item);
+    return request;
+  }
+
   /**
-   * Utility method to get the result as string for the given output index.
+   * Utility method to get the result as string.
    * 
-   * @param jobResult the job result
-   * @param outputIndex the index
    * @return the result as string
    * @throws IOException if something goes wrong
    */
-  private String getResultText(JobExecutionResult jobResult, int outputIndex) throws IOException {
-    final StreamReference streamReference = jobResult.getWorkerResult().getOutput().get(outputIndex);
-
-    InputStream resultStream = s3ProxyClient.downloadFile(streamReference.getUri());
+  private String getResultText(InputStream inputStream) throws IOException {
     StringBuilder sb = new StringBuilder();
-    try (BufferedReader br = new BufferedReader(new InputStreamReader(resultStream))) {
+    try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
       String line;
       while ((line = br.readLine()) != null) {
         if (sb.length() > 0) {

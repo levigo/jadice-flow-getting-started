@@ -9,21 +9,20 @@ function _reset_ownership_to_current_user(){
   if [[ ! "${_uid}" == "0" ]] ; then
     _sudo="sudo"
   fi ;
-  ${_sudo} chown -R "${_uid}:${_uid}"  ./director-config/ ;
-  ${_sudo} chown -R "${_uid}:${_uid}"  ./mariadb-config/ ;
-  ${_sudo} chown -R "${_uid}:${_uid}"  ./minio-config/ ;
+  ${_sudo} chown -R "${_uid}:${_uid}"  ./controller-config/ ;
+  ${_sudo} chown -R "${_uid}:${_uid}"  ./eureka-config/ ;
   ${_sudo} chown -R "${_uid}:${_uid}"  ./worker-config/ ;
   return 0 ;
 }
 
 _remove_docker_compose_stack(){
   echo ">>>[remove-compose] remove docker-compose stack" ;
-  docker-compose down ;
+  docker compose down ;
   return 0 ;
 }
 
 _main() {
-  _reset_ownership_to_current_user ;
+  #_reset_ownership_to_current_user ;
   _remove_docker_compose_stack ;
   return 0 ;
 }

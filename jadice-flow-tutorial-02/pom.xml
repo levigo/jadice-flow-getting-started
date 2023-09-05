@@ -8,18 +8,24 @@
 	<artifactId>jadice-flow-tutorial-02</artifactId>
 
 	<properties>
-		<java.version>1.8</java.version>
+		<java.version>11</java.version>
 		<maven.compiler.source>${java.version}</maven.compiler.source>
 		<maven.compiler.target>${java.version}</maven.compiler.target>
-		<director-client.version>1.3.1</director-client.version>
-		<junit-jupiter.version>5.9.1</junit-jupiter.version>
+		<controller-client.version>0.40.0</controller-client.version>
+		<junit-jupiter.version>5.9.3</junit-jupiter.version>
 	</properties>
 
 	<dependencies>
 		<dependency>
-			<groupId>com.jadice.flow.client</groupId>
-			<artifactId>client</artifactId>
-			<version>${director-client.version}</version>
+			<groupId>com.jadice.flow</groupId>
+			<artifactId>controller-client</artifactId>
+			<version>${controller-client.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.hibernate</groupId>
+					<artifactId>hibernate-core</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
@@ -41,26 +47,4 @@
 
 		</dependency>
 	</dependencies>
-	
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.owasp</groupId>
-				<artifactId>dependency-check-maven</artifactId>
-				<version>${dependency-check-maven}</version>
-				<configuration>
-					<assemblyAnalyzerEnabled>true</assemblyAnalyzerEnabled>
-					<failOnError>true</failOnError>
-				</configuration>
-				<executions>
-					<execution>
-						<goals>
-							<goal>check</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
-
 </project>

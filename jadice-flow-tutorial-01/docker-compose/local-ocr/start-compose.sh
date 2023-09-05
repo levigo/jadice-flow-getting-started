@@ -10,23 +10,26 @@ _login_docker_registry(){
 
 _configure_container_mounts(){
   echo ">>>[start-compose] configure container mounts" ;
-  mkdir -p ./mariadb-data/ ;
-  mkdir -p ./minio-data/ ;
-  sudo chown -R 538446:538446 ./director-config/ ;
-  sudo chown -R 538446:538446 ./worker-config/ ;
-  sudo chown -R 0:0 ./minio-config/ ;
-  sudo chown -R 0:0 ./minio-data/ ;
-  sudo chown -R 999:999 ./mariadb-config/ ;
-  sudo chown -R 999:999 ./mariadb-data/ ;
+  local _sudo="" ;
+  local _uid="$(id -u)" ;
+  if [[ ! "${_uid}" == "0" ]] ; then
+    _sudo="sudo"
+  fi ;
+  ${_sudo} mkdir -p ./eureka-data/ ;
+  ${_sudo} chown -R ${_uid}:538446 ./controller-config/ ;
+  ${_sudo} chown -R ${_uid}:538446 ./worker-config/ ;
+  ${_sudo} chown -R ${_uid}:0 ./eureka-config/ ;
+  ${_sudo} chown -R ${_uid}:0 ./eureka-data/ ;
 
   return 0 ;
 } ;
 
 _start_docker_compose_stack(){
-  echo ">>>[start-compose] start docker-compose stack and follow logs" ;
-  echo ">>>[start-compose] (You can disconnect from logs with Ctrl+C without stopping containers)" ;
-  docker-compose up -d ;
-#  docker-compose logs -f
+  echo ">>>[start-compose] start docker-compose stack" ; # and follow logs" ;
+  echo ">>>[start-compose] you can follow the logs with 'docker compose logs -f'" ;
+  #echo ">>>[start-compose] you can disconnect from logs with Ctrl+C without stopping containers" ;
+  docker compose up -d ;
+  #docker compose logs -f
   return 0 ;
 } ;
 
