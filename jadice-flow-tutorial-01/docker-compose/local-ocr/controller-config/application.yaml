@@ -1,0 +1,47 @@
+---
+server:
+  port: 8080
+
+spring:
+  config:
+    ## worker and job configuration files:
+    import: "/app/config/jobtemplates.yaml,/app/config/workers.yaml"
+  datasource:
+    url: "jdbc:h2:mem:jadice-flow-db;INIT=CREATE SCHEMA IF NOT EXISTS JADICE_FLOW"
+    username: jadice-flow-controller
+    password: changemeorkeepmeidontcare
+
+# H2-Console
+h2-console-config:
+  enabled: true
+  port: 8082
+
+# Storage
+publisher:
+  # required
+  internalEndpoint: "http://eureka:8080"
+  eureka:
+    endpoint: ${EUREKA_ENDPOINT}
+    username: ${EUREKA_USERNAME}
+    password: ${EUREKA_PASSWORD}
+
+# Jadice flow main config
+jadice-flow:
+  server-url: http://localhost:8080/
+  securityToken: ${JF_ACCESS_TOKEN}
+  system:
+    lockJobConfiguration: false
+    configFileJobs: /app/config/jobtemplates.yaml
+
+jadice:
+  license-configuration:
+    license: |
+      ----BEGIN LICENSE----
+      abcdefghijklmnopqrstuvwxyz
+      ----END LICENSE----
+    fingerprint: 1234567890
+    public-key: |
+      -----BEGIN PUBLIC KEY-----
+      abcdefghijklmnopqrstuvwxyz
+      -----END PUBLIC KEY-----
+...

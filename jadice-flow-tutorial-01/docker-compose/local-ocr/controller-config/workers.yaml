@@ -1,0 +1,89 @@
+jadice-flow.workers:
+  workerDefinitions:
+  - workerName: "TessOCR"
+    description: "Performs optical character recognition on the given image parts\
+      \ and stores the result as new part"
+    processorClass: "com.jadice.flow.controller.server.processor.impl.TessOCRProcessor"
+    workerURL: "http://jadice-flow-worker-tessocr:8080/"
+    infoTags:
+    - "PART_BASED"
+    - "IMAGE_PROCESSING"
+    - "REMOTE"
+    workerParameters:
+    - name: "output-formats"
+      type: "com.jadice.flow.worker.ocr.OCROutputSetting"
+      subTypes: null
+      value: "\"TEXT\""
+      description: "OCR output format(s)"
+  - workerName: "CombineToPDF"
+    description: "Creates a single PDF for all image parts of the item"
+    processorClass: "com.jadice.flow.controller.server.processor.RemoteItemProcessor"
+    workerURL: "http://jadice-flow-worker-topdf:8080/"
+    infoTags:
+      - "ITEM_BASED"
+      - "IMAGE_PROCESSING"
+      - "REMOTE"
+    workerParameters:
+      - name: "pdfaConformanceLevel"
+        type: "com.jadice.flow.worker.topdf.settings.Conformance"
+        subTypes: null
+        value: "\"PDF17\""
+        description: "PDF-A conformance level"
+      - name: "processingStepSettings"
+        type: "com.jadice.flow.worker.topdf.settings.ProcessingStepSettingsDTO"
+        subTypes: null
+        value: "{\"repackingAllowed\":false,\"genericProcessingAllowed\":true,\"rasterizationAllowed\"\
+        :true}"
+        description: "PDF export settings"
+      - name: "pdfStructureReaderSettings"
+        type: "com.jadice.flow.worker.topdf.settings.PDFStructureReaderSettingsDTO"
+        subTypes: null
+        value: "{\"readStrategy\":\"STRICT\"}"
+        description: "PDF reader settings. LENIENT-Mode enables to read some documents\
+        \ with structural defects"
+      - name: "outputMode"
+        type: "com.jadice.flow.worker.topdf.settings.OutputMode"
+        subTypes: null
+        value: "\"JOINED\""
+        description: "PDF export output mode. Generate one stream per page or join all\
+        \ incoming documents together."
+      - name: "modcaReaderSettings"
+        type: "com.jadice.flow.worker.topdf.settings.ModcaReaderSettingsDTO"
+        subTypes: null
+        value: "{\"fontMode\":\"FocaRasterShape\"}"
+        description: "Modca reader settings"
+      - name: "baseReshapeSettings"
+        type: "com.jadice.flow.worker.topdf.settings.BaseReshapeSettingsDTO"
+        subTypes: null
+        value: "{\"pageSelection\":null,\"imageRepackingAllowed\":true}"
+        description: "Base reshape settings"
+      - name: "validationModeSettings"
+        type: "com.jadice.flow.worker.topdf.settings.ValidationSettingsDTO"
+        subTypes: null
+        value: "{\"performValidation\":true,\"validationMode\":\"PAGE_COUNT\"\
+          ,\"validationModeFailureAction\":\"FAIL\"}"
+        description: "Validation settings"
+  - workerName: "ContainsText"
+    description: "Sets the exit status to 'true' or 'false' based on the value of the property 'contains-text' of the part."
+    processorClass: "com.jadice.flow.controller.server.processor.logic.ContainsTextExitStatusProcessor"
+    workerURL: null
+    infoTags:
+      - "PART_BASED"
+      - "JOB_FLOW_LOGIC"
+      - "LOCAL"
+    workerParameters: []
+  - workerName: "FiletypeAnalyzer"
+    description: "Detects the mime type for parts with unset / forced mime type recogition\
+      \ by checking the first image bytes"
+    processorClass: "com.jadice.flow.controller.server.processor.impl.FileTypeAnalyzerProcessor"
+    workerURL: "http://jf-worker-analyzer/"
+    infoTags:
+    - "PART_BASED"
+    - "IMAGE_PROCESSING"
+    - "REMOTE"
+    workerParameters:
+    - name: "forced.types"
+      type: "[Ljava.lang.String;"
+      subTypes: null
+      value: null
+      description: "Forces recognition of the given mime types"

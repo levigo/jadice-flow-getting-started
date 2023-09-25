@@ -1,0 +1,9 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: neverpile eureka
+  security:
+    user:
+      name: "${EUREKA_USERNAME}"
+      password: "${EUREKA_PASSWORD}"

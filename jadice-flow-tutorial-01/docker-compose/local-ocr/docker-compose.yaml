@@ -6,130 +6,55 @@ networks:
     driver: bridge
 
 services:
-  # ### DIRECTOR ###
-  # ===============================================
-  jadice-director:
+
+  jf-controller:
     mem_limit: "4294967296"
     mem_reservation: 2147483648
-    image:  "${JF_CONTAINER_REGISTRY_JADICE}jf-director:0.24.1"
+    image:  "${JF_CONTAINER_REGISTRY_JADICE}jadice-flow-controller:0.26.5"
     user: '538446:538446'
     networks:
       - jadice-flow-network
-    depends_on:
-      - mariadb-director
-        # condition: service_healthy
     restart: always
     environment:
-      JF_DIRECTOR_ACCESS_TOKEN: ${JF_DIRECTOR_ACCESS_TOKEN}
+      JF_ACCESS_TOKEN: ${JF_ACCESS_TOKEN}
+      EUREKA_ENDPOINT: http://eureka:8080
+      EUREKA_USERNAME: "${EUREKA_USERNAME}"
+      EUREKA_PASSWORD: "${EUREKA_PASSWORD}"
     volumes:
-      - ./director-config:/app/config
+      - ./controller-config:/app/config
     ports:
       - "8080:8080"
 
-  # ### RUNTIME DB ###
-  # ===============================================
-  mariadb-director:
-    mem_limit: "2147483648"
-    mem_reservation: "1073741824"
-    image: "${JF_CONTAINER_REGISTRY_PROXY}mariadb:10.10.2-jammy"
-    #user: '999:999'
-    restart: always
-    networks:
-      - jadice-flow-network
-    # healthcheck:
-      # test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
-      # interval: 10s
-      # timeout: 1s
-      # retries: 3
-    environment:
-      MYSQL_ROOT_PASSWORD: letmebe
-      MYSQL_DATABASE: jadice_flow_director
-    volumes:
-      - ./mariadb-config:/etc/mysql/conf.d:ro
-      - ./mariadb-data:/var/lib/mysql
-    ports:
-      - "3306:3306"
-
-  # ### S3 Storage ###
-  # ===============================================
-  minio:
-    mem_limit: "4294967296"
-    mem_reservation: "2147483648"
-    image: "${JF_CONTAINER_REGISTRY_PROXY}minio/minio:RELEASE.2022-05-04T07-45-27Z"
-    restart: always
-    volumes:
-      - ./minio-data:/data
-    ports:
-      - "${MINIO_PORT}:${MINIO_PORT}"
-      - "${MINIO_CONSOLE_PORT}:${MINIO_CONSOLE_PORT}"
-    networks:
-      - jadice-flow-network
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-    environment:
-      MINIO_ROOT_USER: "${MINIO_ACCESS_KEY}"
-      MINIO_ROOT_PASSWORD: "${MINIO_SECRET_KEY}"
-      MINIO_BROWSER: "on"
-    command: "server --address 0.0.0.0:${MINIO_PORT} --console-address :${MINIO_CONSOLE_PORT} /data"
-
-  minio-client:
-    image: "${JF_CONTAINER_REGISTRY_PROXY}minio/mc:RELEASE.2022-05-04T06-07-55Z"
-    entrypoint: ["/bin/bash", "/config/initialize"]
-    networks:
-      - jadice-flow-network
-    depends_on:
-      minio:
-        condition: service_healthy
-    environment:
-      MINIO_ENDPOINT: "${MINIO_ENDPOINT}"
-      MINIO_PORT: "${MINIO_PORT}"
-      MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY}"
-      MINIO_SECRET_KEY: "${MINIO_SECRET_KEY}"
-      INIT_BUCKET_NAME: jadice-flow-ocr-bucket
-      MINIO_PROTOCOL: "${MINIO_PROTOCOL}"
-    volumes:
-       - ./minio-config:/config
-
-  ## WORKER ###
-  # ==============================================
   jadice-flow-worker-tessocr:
     mem_limit: "8589934592"
     mem_reservation: "4294967296"
-    image: "${JF_CONTAINER_REGISTRY_JADICE}jf-worker-tessocr:1.1.0"
+    image: "${JF_CONTAINER_REGISTRY_JADICE}jf-worker-tessocr:1.8.0"
     networks:
       - jadice-flow-network
     restart: always
     user: '538446:538446'
     environment:
-      MINIO_ENDPOINT: "${MINIO_ENDPOINT}"
-      MINIO_PORT: "${MINIO_PORT}"
-      MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY}"
-      MINIO_SECRET_KEY: "${MINIO_SECRET_KEY}"
-      MINIO_PROTOCOL: "${MINIO_PROTOCOL}"
+      EUREKA_ENDPOINT: http://eureka:8080
+      EUREKA_USERNAME: "${EUREKA_USERNAME}"
+      EUREKA_PASSWORD: "${EUREKA_PASSWORD}"
     volumes:
       - ./worker-config:/app/config
     ports:
       - "7081:8080"
 
-  # ### S3 Proxy ###
-  # ==============================================
-  s3-proxy:
-    image: "${JF_CONTAINER_REGISTRY_JADICE}jf-s3-proxy:0.9.1"
+  eureka:
+    mem_limit: "4294967296"
+    mem_reservation: "2147483648"
+    image: "${JF_CONTAINER_REGISTRY_JADICE}neverpile-eureka-boxed:0.2.7"
+    restart: always
+    volumes:
+      - ./eureka-config:/config
+      - ./eureka-data:/data/neverpile-eureka_default
+    environment:
+      EUREKA_USERNAME: "${EUREKA_USERNAME}"
+      EUREKA_PASSWORD: "${EUREKA_PASSWORD}"
+    ports:
+      - "8085:8080"
     networks:
       - jadice-flow-network
-    restart: always
-    user: '538446:538446'
-    environment:
-      MINIO_ENDPOINT: "${MINIO_ENDPOINT}"
-      MINIO_PORT: "${MINIO_PORT}"
-      MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY}"
-      MINIO_SECRET_KEY: "${MINIO_SECRET_KEY}"
-      MINIO_PROTOCOL: "${MINIO_PROTOCOL}"
-    volumes:
-      - ./worker-config:/config
-    ports:
-      - "7082:8080"
 ...

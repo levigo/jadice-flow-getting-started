@@ -1,12 +1,11 @@
 ---
 stage: dev
+
 publisher:
-  s3:
-    bucket: jadice-flow-ocr-bucket
-    endpoint: "${MINIO_PROTOCOL}://${MINIO_ENDPOINT}:${MINIO_PORT}"
-    access-key: "${MINIO_ACCESS_KEY}"
-    secret-key: "${MINIO_SECRET_KEY}"
-    protocol: "${MINIO_PROTOCOL}"
+  eureka:
+    endpoint: "${EUREKA_ENDPOINT}"
+    username: "${EUREKA_USERNAME}"
+    password: "${EUREKA_PASSWORD}"
 
 spring:
   application:
@@ -14,7 +13,7 @@ spring:
 
 opentracing:
   jaeger:
-    log-spans: true
+    log-spans: false
     service-name: ${spring.application.name}
     tags:
       stage: ${stage}
