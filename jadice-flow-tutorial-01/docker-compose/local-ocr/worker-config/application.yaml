@@ -38,4 +38,5 @@ management:
 logging:
   level:
     root: INFO
+    com.jadice.flow.worker.tessocr: INFO
 ...
