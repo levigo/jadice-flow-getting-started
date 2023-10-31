@@ -1,8 +1,7 @@
 jadice-flow.jobs:
   jobTemplates:
   - jobName: "ocr"
-    description: "Performs optical character recognition for the given input image(s).\
-    \ ZIP supported. Output is plain text and HOCR part."
+    description: "Performs optical character recognition for the given input image(s). Default output is one plain text part and one HOCR part."
     properties: {}
     enabled: true
     stepTemplates:
@@ -28,87 +27,3 @@ jadice-flow.jobs:
       - from: ""
         "on": "*"
         to: "OCR"
-  - jobName: "imageToPdfWithHOCR"
-    description: "Convert an image to PDF/A 2b with hOCR layer"
-    properties: {}
-    enabled: true
-    stepTemplates:
-    - stepName: "filetypeAnalyzer"
-      workerDefinitionName: "FiletypeAnalyzer"
-      inputMimeTypes: []
-      expectsNewPartResult: false
-      markSrcAsMetaOnResult: false
-      parameters:
-      - name: "forced.types"
-        type: "[Ljava.lang.String;"
-        subTypes: []
-        value: null
-        description: "Forces recognition of the given mime types"
-    - stepName: "ocr"
-      workerDefinitionName: "TessOCR"
-      inputMimeTypes: []
-      expectsNewPartResult: true
-      markSrcAsMetaOnResult: false
-      parameters:
-      - name: "output-formats"
-        type: "com.jadice.flow.worker.ocr.OCROutputSetting"
-        subTypes: []
-        value: "\"HOCR\""
-        description: "OCR output format(s)"
-    - stepName: "pdf"
-      workerDefinitionName: "CombineToPDF"
-      inputMimeTypes: []
-      expectsNewPartResult: false
-      markSrcAsMetaOnResult: true
-      parameters:
-      - name: "pdfaConformanceLevel"
-        type: "com.jadice.flow.worker.topdf.settings.Conformance"
-        subTypes: []
-        value: "\"PDFA2b\""
-        description: "PDF-A conformance level"
-      - name: "processingStepSettings"
-        type: "com.jadice.flow.worker.topdf.settings.ProcessingStepSettingsDTO"
-        subTypes: []
-        value: "{\"repackingAllowed\":false,\"genericProcessingAllowed\":true,\"rasterizationAllowed\"\
-          :true}"
-        description: "PDF export settings"
-      - name: "pdfStructureReaderSettings"
-        type: "com.jadice.flow.worker.topdf.settings.PDFStructureReaderSettingsDTO"
-        subTypes: []
-        value: "{\"readStrategy\":\"STRICT\"}"
-        description: "PDF reader settings. LENIENT-Mode enables to read some documents\
-          \ with structural defects"
-      - name: "outputMode"
-        type: "com.jadice.flow.worker.topdf.settings.OutputMode"
-        subTypes: []
-        value: "\"LAYERED\""
-        description: "PDF export output mode. Generate one stream per page or join\
-          \ all incoming documents together."
-      - name: "modcaReaderSettings"
-        type: "com.jadice.flow.worker.topdf.settings.ModcaReaderSettingsDTO"
-        subTypes: []
-        value: "{\"fontMode\":\"FocaRasterShape\"}"
-        description: "Modca reader settings"
-      - name: "baseReshapeSettings"
-        type: "com.jadice.flow.worker.topdf.settings.BaseReshapeSettingsDTO"
-        subTypes: []
-        value: "{\"pageSelection\":null,\"imageRepackingAllowed\":true}"
-        description: "Base reshape settings"
-      - name: "validationModeSettings"
-        type: "com.jadice.flow.worker.topdf.settings.ValidationSettingsDTO"
-        subTypes: []
-        value: "{\"performValidation\":true,\"validationMode\":\"PAGE_COUNT\",\"validationModeFailureAction\"\
-          :\"FAIL\"}"
-        description: "Validation settings"
-    jobFlow:
-    - from: null
-      "on": "*"
-      to: "filetypeAnalyzer"
-    - from: "filetypeAnalyzer"
-      "on": "COMPLETED"
-      to: "ocr"
-    - from: "ocr"
-      "on": "COMPLETED"
-      to: "pdf"
-
-
